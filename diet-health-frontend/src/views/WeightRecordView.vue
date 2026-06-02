@@ -176,12 +176,10 @@ async function fetchData() {
       getLatestWeight(memberId),
       getWeightTrend(30, memberId)
     ])
-    if (latestRes.code === 200) latestWeight.value = latestRes.data
-    if (trendRes.code === 200) {
-      trendData.value = trendRes.data
-      await nextTick()
-      renderTrendChart(trendRes.data)
-    }
+    latestWeight.value = latestRes.data
+    trendData.value = trendRes.data
+    await nextTick()
+    renderTrendChart(trendRes.data)
   } catch (error) {
     ElMessage.error('获取体重数据失败')
   }

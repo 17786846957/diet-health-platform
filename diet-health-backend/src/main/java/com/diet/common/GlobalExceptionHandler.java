@@ -32,13 +32,30 @@ public class GlobalExceptionHandler {
     public ResponseEntity<R<?>> handleBusinessException(BusinessException e, HttpServletRequest request) {
         log.warn("业务异常: code={}, message={}, uri={}", e.getCode(), e.getMessage(), request.getRequestURI());
         HttpStatus status;
-        switch (e.getCode()) {
-            case 401: status = HttpStatus.UNAUTHORIZED; break;
-            case 403: status = HttpStatus.FORBIDDEN; break;
-            case 404: case 1002: case 1004: case 1005: case 1007: case 1009: case 1011: case 1013: status = HttpStatus.NOT_FOUND; break;
-            case 1001: status = HttpStatus.CONFLICT; break;
-            case 1003: case 1006: case 1008: case 1010: case 1012: case 1014: status = HttpStatus.FORBIDDEN; break;
-            default: status = HttpStatus.BAD_REQUEST; break;
+        int code = e.getCode();
+        if (code == ResultCode.UNAUTHORIZED.getCode()) {
+            status = HttpStatus.UNAUTHORIZED;
+        } else if (code == ResultCode.FORBIDDEN.getCode()
+                || code == ResultCode.RECORD_FORBIDDEN.getCode()
+                || code == ResultCode.MEMBER_FORBIDDEN.getCode()
+                || code == ResultCode.WATER_RECORD_FORBIDDEN.getCode()
+                || code == ResultCode.EXERCISE_RECORD_FORBIDDEN.getCode()
+                || code == ResultCode.WEIGHT_RECORD_FORBIDDEN.getCode()
+                || code == ResultCode.GOAL_FORBIDDEN.getCode()) {
+            status = HttpStatus.FORBIDDEN;
+        } else if (code == ResultCode.NOT_FOUND.getCode()
+                || code == ResultCode.RECORD_NOT_FOUND.getCode()
+                || code == ResultCode.FOOD_NOT_FOUND.getCode()
+                || code == ResultCode.MEMBER_NOT_FOUND.getCode()
+                || code == ResultCode.WATER_RECORD_NOT_FOUND.getCode()
+                || code == ResultCode.EXERCISE_RECORD_NOT_FOUND.getCode()
+                || code == ResultCode.WEIGHT_RECORD_NOT_FOUND.getCode()
+                || code == ResultCode.GOAL_NOT_FOUND.getCode()) {
+            status = HttpStatus.NOT_FOUND;
+        } else if (code == ResultCode.USER_EXISTS.getCode()) {
+            status = HttpStatus.CONFLICT;
+        } else {
+            status = HttpStatus.BAD_REQUEST;
         }
         return ResponseEntity.status(status).body(R.error(e.getCode(), e.getMessage()));
     }

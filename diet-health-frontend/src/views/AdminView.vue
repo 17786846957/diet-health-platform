@@ -21,6 +21,29 @@
       </el-col>
     </el-row>
 
+    <el-row :gutter="16" style="margin-bottom: 20px">
+      <el-col :xs="24" :sm="12">
+        <el-card>
+          <template #header><span style="font-weight: 600">用户注册趋势</span></template>
+          <div ref="userTrendRef" style="height: 260px"></div>
+        </el-card>
+      </el-col>
+      <el-col :xs="24" :sm="12">
+        <el-card>
+          <template #header><span style="font-weight: 600">饮食记录活跃度</span></template>
+          <div ref="recordTrendRef" style="height: 260px"></div>
+        </el-card>
+      </el-col>
+    </el-row>
+    <el-row :gutter="16" style="margin-bottom: 20px">
+      <el-col :xs="24" :sm="12">
+        <el-card>
+          <template #header><span style="font-weight: 600">食物分类分布</span></template>
+          <div ref="foodPieRef" style="height: 260px"></div>
+        </el-card>
+      </el-col>
+    </el-row>
+
     <el-tabs type="border-card">
       <el-tab-pane label="用户管理" name="users">
         <el-table :data="users" stripe v-loading="usersLoading">
@@ -128,16 +151,30 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { getDashboard, getUsers, deleteUser } from '../api/admin'
+import { ref, shallowRef, onMounted, onBeforeUnmount } from 'vue'
+import * as echarts from 'echarts/core'
+import { LineChart, BarChart, PieChart } from 'echarts/charts'
+import { GridComponent, TooltipComponent, LegendComponent } from 'echarts/components'
+import { CanvasRenderer } from 'echarts/renderers'
+import { getDashboard, getUsers, deleteUser, getUserTrend, getFoodCategories, getRecordTrend } from '../api/admin'
 import { getFoods, addFood, updateFood, deleteFood } from '../api/food'
 import { ElMessage } from 'element-plus'
 import { foodCategories, FALLBACK_ERROR } from '../utils/constants'
+
+echarts.use([LineChart, BarChart, PieChart, GridComponent, TooltipComponent, LegendComponent, CanvasRenderer])
 
 const dashboard = ref({})
 const users = ref([])
 const userPage = ref(1)
 const userTotal = ref(0)
+
+// 图表
+const userTrendRef = ref()
+const recordTrendRef = ref()
+const foodPieRef = ref()
+const userTrendChart = shallowRef(null)
+const recordTrendChart = shallowRef(null)
+const foodPieChart = shallowRef(null)
 
 // 食物管理
 const foods = ref([])
@@ -247,10 +284,97 @@ const handleFoodDelete = async (id) => {
   }
 }
 
+function makeGradient(c1, c2) {
+  return new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+    { offset: 0, color: c1 },
+    { offset: 1, color: c2 }
+  ])
+}
+
+async function loadCharts() {
+  try {
+    const [userRes, recordRes, foodRes] = await Promise.allSettled([
+      getUserTrend({ days: 7 }),
+      getRecordTrend({ days: 7 }),
+      getFoodCategories()
+    ])
+
+    if (userRes.status === 'fulfilled') {
+      const data = userRes.value.data
+      if (!userTrendChart.value) userTrendChart.value = echarts.init(userTrendRef.value)
+      userTrendChart.value.setOption({
+        tooltip: { trigger: 'axis' },
+        grid: { top: 20, right: 20, bottom: 30, left: 40 },
+        xAxis: { type: 'category', data: data.map(d => d.date.slice(5)), axisLabel: { color: '#94a3b8' }, axisLine: { lineStyle: { color: '#eee' } } },
+        yAxis: { type: 'value', minInterval: 1, axisLabel: { color: '#94a3b8' }, splitLine: { lineStyle: { color: '#f1f5f9' } } },
+        series: [{
+          data: data.map(d => d.count), type: 'line', smooth: true,
+          areaStyle: { color: makeGradient('rgba(99,102,241,0.2)', 'rgba(99,102,241,0)') },
+          lineStyle: { color: '#6366f1', width: 2 }, itemStyle: { color: '#6366f1' }
+        }]
+      })
+    }
+
+    if (recordRes.status === 'fulfilled') {
+      const data = recordRes.value.data
+      if (!recordTrendChart.value) recordTrendChart.value = echarts.init(recordTrendRef.value)
+      recordTrendChart.value.setOption({
+        tooltip: { trigger: 'axis' },
+        grid: { top: 20, right: 20, bottom: 30, left: 40 },
+        xAxis: { type: 'category', data: data.map(d => d.date.slice(5)), axisLabel: { color: '#94a3b8' }, axisLine: { lineStyle: { color: '#eee' } } },
+        yAxis: { type: 'value', minInterval: 1, axisLabel: { color: '#94a3b8' }, splitLine: { lineStyle: { color: '#f1f5f9' } } },
+        series: [{
+          data: data.map(d => d.count), type: 'bar', barWidth: 24,
+          itemStyle: { borderRadius: [4, 4, 0, 0], color: makeGradient('#10b981', '#34d399') }
+        }]
+      })
+    }
+
+    if (foodRes.status === 'fulfilled') {
+      const data = foodRes.value.data
+      if (!foodPieChart.value) foodPieChart.value = echarts.init(foodPieRef.value)
+      const colors = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6']
+      foodPieChart.value.setOption({
+        tooltip: { trigger: 'item', formatter: '{b}: {c}种 ({d}%)' },
+        legend: { bottom: 0, itemWidth: 10, itemHeight: 10, textStyle: { color: '#666', fontSize: 11 } },
+        series: [{
+          type: 'pie', radius: ['40%', '68%'], center: ['50%', '45%'],
+          itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 2 },
+          label: { show: false },
+          emphasis: { label: { show: true, fontSize: 13, fontWeight: 'bold' } },
+          data: data.map((d, i) => ({ name: d.category, value: d.count, itemStyle: { color: colors[i % colors.length] } }))
+        }]
+      })
+    }
+  } catch (e) {
+    console.warn('加载图表数据失败:', e)
+  }
+}
+
+let resizeRaf = null
+function handleResize() {
+  if (resizeRaf) return
+  resizeRaf = requestAnimationFrame(() => {
+    userTrendChart.value?.resize()
+    recordTrendChart.value?.resize()
+    foodPieChart.value?.resize()
+    resizeRaf = null
+  })
+}
+
 onMounted(() => {
   loadDashboard()
   loadUsers()
   loadFoods()
+  loadCharts()
+  window.addEventListener('resize', handleResize)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', handleResize)
+  userTrendChart.value?.dispose()
+  recordTrendChart.value?.dispose()
+  foodPieChart.value?.dispose()
 })
 </script>
 

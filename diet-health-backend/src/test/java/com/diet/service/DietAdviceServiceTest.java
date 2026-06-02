@@ -24,6 +24,7 @@ import static org.mockito.Mockito.*;
 class DietAdviceServiceTest {
 
     @Mock private DietRecordService dietRecordService;
+    @Mock private FoodRecommendationService foodRecommendationService;
     @Mock private UserService userService;
     @Mock private FoodMapper foodMapper;
     @Mock private DietRecordMapper dietRecordMapper;
@@ -41,7 +42,7 @@ class DietAdviceServiceTest {
 
         when(dietRecordService.getDailyStats(anyLong(), any(), any())).thenReturn(emptyStats);
         when(userService.calculateTargets(1L)).thenReturn(new double[]{2000, 60, 55, 300});
-        when(dietRecordService.recommendFoods(anyLong(), any(), any())).thenReturn(Collections.emptyList());
+        when(foodRecommendationService.recommendFoods(anyLong(), any(), any())).thenReturn(Collections.emptyList());
 
         Map<String, Object> result = dietAdviceService.getDailyAdvice(1L, null);
         assertEquals("未开始", result.get("status"));
@@ -57,7 +58,7 @@ class DietAdviceServiceTest {
 
         when(dietRecordService.getDailyStats(anyLong(), any(), any())).thenReturn(stats);
         when(userService.calculateTargets(1L)).thenReturn(new double[]{2000, 60, 55, 300});
-        when(dietRecordService.recommendFoods(anyLong(), any(), any())).thenReturn(Collections.emptyList());
+        when(foodRecommendationService.recommendFoods(anyLong(), any(), any())).thenReturn(Collections.emptyList());
 
         Map<String, Object> result = dietAdviceService.getDailyAdvice(1L, null);
         assertEquals("已达标", result.get("status"));
@@ -73,7 +74,7 @@ class DietAdviceServiceTest {
 
         when(dietRecordService.getDailyStats(anyLong(), any(), any())).thenReturn(stats);
         when(userService.calculateTargets(1L)).thenReturn(new double[]{2000, 60, 55, 300});
-        when(dietRecordService.recommendFoods(anyLong(), any(), any())).thenReturn(Collections.emptyList());
+        when(foodRecommendationService.recommendFoods(anyLong(), any(), any())).thenReturn(Collections.emptyList());
 
         Map<String, Object> result = dietAdviceService.getDailyAdvice(1L, null);
         assertEquals("接近达标", result.get("status"));
@@ -89,7 +90,7 @@ class DietAdviceServiceTest {
 
         when(dietRecordService.getDailyStats(anyLong(), any(), any())).thenReturn(emptyStats);
         when(userService.calculateTargetsForMember(10L)).thenReturn(new double[]{1800, 67, 50, 270});
-        when(dietRecordService.recommendFoods(anyLong(), any(), any())).thenReturn(Collections.emptyList());
+        when(foodRecommendationService.recommendFoods(anyLong(), any(), any())).thenReturn(Collections.emptyList());
 
         Map<String, Object> result = dietAdviceService.getDailyAdvice(1L, 10L);
         assertNotNull(result.get("nutritionGap"));

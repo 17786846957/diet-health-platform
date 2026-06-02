@@ -112,13 +112,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
     }
 
     private String getClientIp(HttpServletRequest request) {
-        // 优先使用 X-Real-IP（反向代理设置，不可伪造）
-        String ip = request.getHeader("X-Real-IP");
-        if (ip == null || ip.isEmpty()) {
-            // 回退到 request.getRemoteAddr()（直接连接的客户端 IP）
-            ip = request.getRemoteAddr();
-        }
-        return ip;
+        return request.getRemoteAddr();
     }
 
     private static class AttemptInfo {

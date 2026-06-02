@@ -67,8 +67,7 @@ onMounted(() => fetchData())
 async function fetchData() {
   loading.value = true
   try {
-    const res = await getDailyAdvice(props.memberId)
-    if (res.code === 200) dailyAdvice.value = res.data
+    dailyAdvice.value = await getDailyAdvice(props.memberId)
   } catch {
     ElMessage.error('获取每日建议失败')
   } finally {

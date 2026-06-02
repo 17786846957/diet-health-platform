@@ -150,10 +150,8 @@ onBeforeUnmount(() => {
 async function fetchRecords() {
   try {
     const memberId = userStore.activeMemberId
-    const res = await getExerciseDailyStats(selectedDate.value, memberId)
-    if (res.code === 200) {
-      dailyStats.value = res.data
-    }
+    const data = await getExerciseDailyStats(selectedDate.value, memberId)
+    dailyStats.value = data
     fetchWeeklyStats()
   } catch (error) {
     ElMessage.error('获取运动记录失败')
@@ -163,11 +161,9 @@ async function fetchRecords() {
 async function fetchWeeklyStats() {
   try {
     const memberId = userStore.activeMemberId
-    const res = await getExerciseWeeklyStats(null, memberId)
-    if (res.code === 200) {
-      await nextTick()
-      renderWeeklyChart(res.data)
-    }
+    const data = await getExerciseWeeklyStats(null, memberId)
+    await nextTick()
+    renderWeeklyChart(data)
   } catch (error) {
     ElMessage.error('获取周统计失败')
   }

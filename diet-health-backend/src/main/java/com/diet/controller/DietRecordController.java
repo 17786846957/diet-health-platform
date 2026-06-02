@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -38,21 +39,7 @@ public class DietRecordController {
     @Operation(summary = "添加饮食记录", description = "添加一条饮食记录，包含食物明细")
     @PostMapping
     public R<?> addRecord(@Valid @RequestBody DietRecordRequest request, Authentication auth) {
-        DietRecord record = new DietRecord();
-        record.setUserId((Long) auth.getPrincipal());
-        record.setRecordDate(request.getRecordDate());
-        record.setMealType(request.getMealType());
-        record.setMemberId(request.getMemberId());
-        if (request.getDetails() != null) {
-            List<DietRecordDetail> details = new java.util.ArrayList<>();
-            for (DietRecordDetailRequest d : request.getDetails()) {
-                DietRecordDetail detail = new DietRecordDetail();
-                detail.setFoodId(d.getFoodId());
-                detail.setAmount(d.getAmount());
-                details.add(detail);
-            }
-            record.setDetails(details);
-        }
+        DietRecord record = toEntity(request, (Long) auth.getPrincipal());
         dietRecordService.addRecord(record);
         return R.ok("添加成功", null);
     }
@@ -61,6 +48,12 @@ public class DietRecordController {
     @PutMapping
     public R<?> updateRecord(@Valid @RequestBody DietRecordRequest request, Authentication auth) {
         Long userId = (Long) auth.getPrincipal();
+        DietRecord record = toEntity(request, userId);
+        dietRecordService.updateRecord(record, userId);
+        return R.ok("更新成功", null);
+    }
+
+    private DietRecord toEntity(DietRecordRequest request, Long userId) {
         DietRecord record = new DietRecord();
         record.setId(request.getId());
         record.setUserId(userId);
@@ -68,7 +61,7 @@ public class DietRecordController {
         record.setMealType(request.getMealType());
         record.setMemberId(request.getMemberId());
         if (request.getDetails() != null) {
-            List<DietRecordDetail> details = new java.util.ArrayList<>();
+            List<DietRecordDetail> details = new ArrayList<>();
             for (DietRecordDetailRequest d : request.getDetails()) {
                 DietRecordDetail detail = new DietRecordDetail();
                 detail.setFoodId(d.getFoodId());
@@ -77,8 +70,7 @@ public class DietRecordController {
             }
             record.setDetails(details);
         }
-        dietRecordService.updateRecord(record, userId);
-        return R.ok("更新成功", null);
+        return record;
     }
 
     @AuditLog(value = "删除饮食记录", resource = "diet_record")

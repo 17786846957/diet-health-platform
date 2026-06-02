@@ -4,7 +4,9 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.diet.common.BusinessException;
 import com.diet.common.ResultCode;
 import com.diet.entity.HealthGoal;
+import com.diet.entity.WeightRecord;
 import com.diet.mapper.HealthGoalMapper;
+import com.diet.mapper.WeightRecordMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -21,6 +23,7 @@ import java.util.*;
 public class HealthGoalService {
 
     private final HealthGoalMapper healthGoalMapper;
+    private final WeightRecordMapper weightRecordMapper;
 
     @Transactional(rollbackFor = Exception.class)
     public void createGoal(HealthGoal goal) {
@@ -106,12 +109,10 @@ public class HealthGoalService {
         if (goal.getTargetWeight() != null && goal.getTargetWeight().compareTo(BigDecimal.ZERO) > 0
                 && currentWeight != null && currentWeight.compareTo(BigDecimal.ZERO) > 0) {
             BigDecimal targetWeight = goal.getTargetWeight();
-            // 简化进度计算：假设起始体重为当前体重的1.2倍（减重场景）
-            // 实际应从weight_record表查询起始体重
-            BigDecimal assumedStart = currentWeight.multiply(new BigDecimal("1.2"));
-            BigDecimal totalToLose = assumedStart.subtract(targetWeight).abs();
+            BigDecimal startWeight = getStartWeight(goal);
+            BigDecimal totalToLose = startWeight.subtract(targetWeight).abs();
             if (totalToLose.compareTo(BigDecimal.ZERO) > 0) {
-                BigDecimal lost = assumedStart.subtract(currentWeight).abs();
+                BigDecimal lost = startWeight.subtract(currentWeight).abs();
                 BigDecimal progress = lost.divide(totalToLose, 2, RoundingMode.HALF_UP)
                         .multiply(new BigDecimal("100"))
                         .min(new BigDecimal("100"));
@@ -119,6 +120,22 @@ public class HealthGoalService {
             }
         }
         healthGoalMapper.updateById(goal);
+    }
+
+    private BigDecimal getStartWeight(HealthGoal goal) {
+        LambdaQueryWrapper<WeightRecord> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(WeightRecord::getUserId, goal.getUserId());
+        if (goal.getMemberId() != null) {
+            wrapper.eq(WeightRecord::getMemberId, goal.getMemberId());
+        } else {
+            wrapper.isNull(WeightRecord::getMemberId);
+        }
+        if (goal.getStartDate() != null) {
+            wrapper.le(WeightRecord::getRecordDate, goal.getStartDate());
+        }
+        wrapper.orderByAsc(WeightRecord::getRecordDate).last("LIMIT 1");
+        WeightRecord first = weightRecordMapper.selectOne(wrapper);
+        return first != null ? first.getWeight() : null;
     }
 
     private LambdaQueryWrapper<HealthGoal> buildWrapper(Long userId, Long memberId) {

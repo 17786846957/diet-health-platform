@@ -77,7 +77,7 @@
       <div v-for="item in nutritionGaps" :key="item.nutrient" class="gap-item">
         <div class="gap-header">
           <span>{{ item.nutrient }}</span>
-          <span :style="{ color: getStatusColor(item.percentage) }">
+          <span :style="{ color: getProgressColor(item.percentage) }">
             {{ item.actual }}/{{ item.target }} {{ item.unit }} ({{ item.percentage }}%)
           </span>
         </div>
@@ -172,12 +172,6 @@ const advice = computed(() => {
 })
 
 function getProgressColor(pct) {
-  if (pct >= 100) return '#ef4444'
-  if (pct >= 80) return '#f59e0b'
-  return '#10b981'
-}
-
-function getStatusColor(pct) {
   if (pct >= 100) return '#ef4444'
   if (pct >= 80) return '#f59e0b'
   return '#10b981'

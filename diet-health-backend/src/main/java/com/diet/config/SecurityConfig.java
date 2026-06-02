@@ -39,7 +39,8 @@ public class SecurityConfig {
             .and()
             .authorizeRequests()
                 .antMatchers("/auth/login", "/auth/register", "/auth/logout").permitAll()
-                .antMatchers("/actuator/**").permitAll()
+                .antMatchers("/actuator/health").permitAll()
+                .antMatchers("/actuator/**").hasRole("admin")
                 .antMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").hasRole("admin")
                 .antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .antMatchers("/admin/**").hasRole("admin")
@@ -61,7 +62,7 @@ public class SecurityConfig {
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
             .headers()
                 .contentTypeOptions().and()
-                .frameOptions().sameOrigin()
+                .frameOptions().deny()
                 .xssProtection().block(true).and()
                 .httpStrictTransportSecurity().includeSubDomains(true).maxAgeInSeconds(31536000).and()
                 .and();

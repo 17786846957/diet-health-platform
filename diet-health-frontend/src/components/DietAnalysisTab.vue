@@ -117,12 +117,9 @@ onBeforeUnmount(() => {
 async function fetchData() {
   loading.value = true
   try {
-    const res = await getDietAnalysis(analysisDays.value, props.memberId)
-    if (res.code === 200) {
-      dietAnalysis.value = res.data
-      await nextTick()
-      renderMealChart()
-    }
+    dietAnalysis.value = await getDietAnalysis(analysisDays.value, props.memberId)
+    await nextTick()
+    renderMealChart()
   } catch {
     ElMessage.error('获取饮食分析失败')
   } finally {

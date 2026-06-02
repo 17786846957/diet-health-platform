@@ -23,3 +23,11 @@ export function getHealthAdvice(memberId) {
     params: { memberId }
   })
 }
+
+export function getMealPlan(memberId) {
+  return request({
+    url: '/diet-advice/meal-plan',
+    method: 'get',
+    params: { memberId }
+  })
+}

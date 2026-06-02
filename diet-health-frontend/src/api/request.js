@@ -9,12 +9,13 @@ const request = axios.create({
 
 // 并发请求计数器，解决 loading 闪烁问题
 let activeRequests = 0
+let isRedirectingToLogin = false
 
 // 请求拦截器：显示全局 loading
 request.interceptors.request.use(config => {
   if (!config.silent) {
     activeRequests++
-    useAppStore().showLoading()
+    if (activeRequests === 1) useAppStore().showLoading()
   }
   return config
 })
@@ -38,17 +39,23 @@ request.interceptors.response.use(
       if (activeRequests === 0) useAppStore().hideLoading()
     }
     if (error.response?.status === 401) {
-      const { ElMessage } = await import('element-plus')
-      const { useUserStore } = await import('../stores/user')
-      const userStore = useUserStore()
-      userStore.logout()
-      ElMessage.error(error.response?.data?.message || error.response?.data?.msg || '未登录或登录已过期')
-      setTimeout(() => {
-        window.location.href = '/login'
-      }, 1500)
+      if (!isRedirectingToLogin) {
+        isRedirectingToLogin = true
+        const { ElMessage } = await import('element-plus')
+        const { useUserStore } = await import('../stores/user')
+        const userStore = useUserStore()
+        userStore.logout()
+        ElMessage.error(error.response?.data?.message || error.response?.data?.msg || '未登录或登录已过期')
+        setTimeout(() => {
+          isRedirectingToLogin = false
+          window.location.href = '/login'
+        }, 1500)
+      }
       return Promise.reject(new Error('未登录或登录已过期'))
     }
     const msg = error.response?.data?.message || error.response?.data?.msg || '网络错误'
+    const { ElMessage } = await import('element-plus')
+    ElMessage.error(msg)
     return Promise.reject(new Error(msg))
   }
 )

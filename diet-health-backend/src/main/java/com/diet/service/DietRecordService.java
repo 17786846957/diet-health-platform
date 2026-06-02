@@ -238,10 +238,10 @@ public class DietRecordService {
     public Map<String, Object> getNutritionGap(Long userId, Long memberId, LocalDate date) {
         log.debug("营养缺口分析: userId={}, memberId={}, date={}", userId, memberId, date);
         Map<String, Object> dailyStats = getDailyStats(userId, memberId, date);
-        double actualCalories = (double) dailyStats.get("totalCalories");
-        double actualProtein = (double) dailyStats.get("totalProtein");
-        double actualFat = (double) dailyStats.get("totalFat");
-        double actualCarbs = (double) dailyStats.get("totalCarbs");
+        double actualCalories = NutritionUtil.safeDouble(dailyStats.get("totalCalories"));
+        double actualProtein = NutritionUtil.safeDouble(dailyStats.get("totalProtein"));
+        double actualFat = NutritionUtil.safeDouble(dailyStats.get("totalFat"));
+        double actualCarbs = NutritionUtil.safeDouble(dailyStats.get("totalCarbs"));
 
         double[] targets = (memberId != null)
                 ? userService.calculateTargetsForMember(memberId)
@@ -370,7 +370,7 @@ public class DietRecordService {
         Map<Long, long[]> usageMap = new HashMap<>();
         for (DietRecordDetail detail : details) {
             usageMap.merge(detail.getFoodId(), new long[]{1, detail.getAmount().longValue()},
-                    (a, b) -> new long[]{a[0] + 1, a[1]});
+                    (a, b) -> new long[]{a[0] + 1, a[1] + b[1]});
         }
 
         List<Map<String, Object>> result = new ArrayList<>();

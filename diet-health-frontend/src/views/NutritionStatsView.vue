@@ -1,5 +1,12 @@
 <template>
   <div class="stats-page">
+    <div class="stats-toolbar">
+      <span class="stats-toolbar__title">营养统计</span>
+      <el-button type="primary" plain size="small" @click="handlePrint">
+        <el-icon style="margin-right: 4px"><Printer /></el-icon>打印报告
+      </el-button>
+    </div>
+
     <!-- 顶部趋势区 -->
     <el-row :gutter="16" style="margin-bottom: 16px">
       <el-col :xs="24" :sm="12">
@@ -65,9 +72,10 @@
 import { ref, shallowRef, computed, onMounted, onBeforeUnmount } from 'vue'
 import * as echarts from 'echarts/core'
 import { LineChart, PieChart, BarChart } from 'echarts/charts'
-import { GridComponent, TooltipComponent, LegendComponent, TitleComponent, DataZoomComponent, MarkLineComponent } from 'echarts/components'
+import { GridComponent, TooltipComponent, LegendComponent, DataZoomComponent, MarkLineComponent } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
 import { ElMessage } from 'element-plus'
+import { Printer } from '@element-plus/icons-vue'
 import { useDietStore } from '../stores/diet'
 import { useUserStore } from '../stores/user'
 import { useLoading } from '../composables/useLoading'
@@ -76,12 +84,12 @@ import { calculateTargetCalories } from '../utils/nutrition'
 import { mealMap, FALLBACK_ERROR } from '../utils/constants'
 import { getNutritionGap } from '../api/diet'
 
-echarts.use([LineChart, PieChart, BarChart, GridComponent, TooltipComponent, LegendComponent, TitleComponent, DataZoomComponent, MarkLineComponent, CanvasRenderer])
+echarts.use([LineChart, PieChart, BarChart, GridComponent, TooltipComponent, LegendComponent, DataZoomComponent, MarkLineComponent, CanvasRenderer])
 
 const dietStore = useDietStore()
 const userStore = useUserStore()
-const { loading: lineLoading, withLoading: withLineLoading } = useLoading()
-const { loading: pieLoading, withLoading: withPieLoading } = useLoading()
+const { withLoading: withLineLoading } = useLoading()
+const { withLoading: withPieLoading } = useLoading()
 
 const today = getToday()
 
@@ -300,6 +308,10 @@ function handleResize() {
   gapChart.value?.resize()
 }
 
+function handlePrint() {
+  window.print()
+}
+
 onMounted(() => {
   window.addEventListener('resize', handleResize)
   loadTrend()
@@ -321,6 +333,18 @@ onBeforeUnmount(() => {
 <style scoped>
 .stats-page {
   padding: 4px;
+}
+.stats-toolbar {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;
+}
+.stats-toolbar__title {
+  font-size: 18px; font-weight: 700; color: var(--text-primary);
+}
+@media print {
+  .stats-toolbar { display: none !important; }
+  .stats-page { padding: 0; }
+  .chart-card { break-inside: avoid; page-break-inside: avoid; box-shadow: none; border: 1px solid #ddd; }
+  .el-date-picker, .el-radio-group { display: none !important; }
 }
 
 .chart-card {

@@ -2,7 +2,9 @@ package com.diet.service;
 
 import com.diet.common.BusinessException;
 import com.diet.entity.HealthGoal;
+import com.diet.entity.WeightRecord;
 import com.diet.mapper.HealthGoalMapper;
+import com.diet.mapper.WeightRecordMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -22,6 +24,7 @@ import static org.mockito.Mockito.*;
 class HealthGoalServiceTest {
 
     @Mock private HealthGoalMapper healthGoalMapper;
+    @Mock private WeightRecordMapper weightRecordMapper;
     @InjectMocks private HealthGoalService healthGoalService;
 
     @Test
@@ -135,10 +138,15 @@ class HealthGoalServiceTest {
     void updateProgress_calculatesPercentage() {
         HealthGoal goal = new HealthGoal();
         goal.setId(1L);
+        goal.setUserId(1L);
         goal.setStatus("active");
         goal.setTargetWeight(new BigDecimal("65"));
         when(healthGoalMapper.selectById(1L)).thenReturn(goal);
         when(healthGoalMapper.updateById(any())).thenReturn(1);
+
+        WeightRecord startRecord = new WeightRecord();
+        startRecord.setWeight(new BigDecimal("80"));
+        when(weightRecordMapper.selectOne(any())).thenReturn(startRecord);
 
         healthGoalService.updateProgress(1L, new BigDecimal("70"));
         assertNotNull(goal.getProgress());

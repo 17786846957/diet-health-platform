@@ -163,10 +163,8 @@ onBeforeUnmount(() => {
 async function fetchRecords() {
   try {
     const memberId = userStore.activeMemberId
-    const res = await getWaterDailyStats(selectedDate.value, memberId)
-    if (res.code === 200) {
-      dailyStats.value = res.data
-    }
+    const data = await getWaterDailyStats(selectedDate.value, memberId)
+    dailyStats.value = data
     fetchWeeklyStats()
   } catch (error) {
     ElMessage.error('获取饮水记录失败')
@@ -176,11 +174,9 @@ async function fetchRecords() {
 async function fetchWeeklyStats() {
   try {
     const memberId = userStore.activeMemberId
-    const res = await getWaterWeeklyStats(null, memberId)
-    if (res.code === 200) {
-      await nextTick()
-      renderWeeklyChart(res.data)
-    }
+    const data = await getWaterWeeklyStats(null, memberId)
+    await nextTick()
+    renderWeeklyChart(data)
   } catch (error) {
     console.error('获取周统计失败', error)
   }

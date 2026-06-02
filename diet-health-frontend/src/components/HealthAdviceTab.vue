@@ -53,8 +53,7 @@ watch(() => props.active, (val) => {
 async function fetchData() {
   loading.value = true
   try {
-    const res = await getHealthAdvice(props.memberId)
-    if (res.code === 200) healthAdvice.value = res.data
+    healthAdvice.value = await getHealthAdvice(props.memberId)
   } catch {
     ElMessage.error('获取健康建议失败')
   } finally {

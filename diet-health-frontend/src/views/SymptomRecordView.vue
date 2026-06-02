@@ -161,8 +161,7 @@ async function fetchRecords() {
   try {
     const memberId = userStore.activeMemberId
     const [start, end] = dateRange.value || []
-    const res = await listSymptoms(start, end, memberId)
-    if (res.code === 200) symptoms.value = res.data
+    symptoms.value = await listSymptoms(start, end, memberId)
   } catch (error) {
     ElMessage.error('获取症状记录失败')
   }
@@ -171,8 +170,7 @@ async function fetchRecords() {
 async function fetchAnalysis() {
   try {
     const memberId = userStore.activeMemberId
-    const res = await getSymptomAnalysis(30, memberId)
-    if (res.code === 200) analysis.value = res.data
+    analysis.value = await getSymptomAnalysis(30, memberId)
   } catch (error) {
     console.error('获取分析数据失败', error)
   }

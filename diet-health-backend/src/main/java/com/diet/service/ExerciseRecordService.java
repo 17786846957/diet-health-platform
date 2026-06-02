@@ -101,7 +101,7 @@ public class ExerciseRecordService {
         for (ExerciseRecord record : records) {
             int[] arr = dailyMap.get(record.getRecordDate());
             if (arr != null) {
-                arr[0] += record.getDuration();
+                arr[0] += record.getDuration() != null ? record.getDuration() : 0;
                 arr[1] += record.getCaloriesBurned() != null ? record.getCaloriesBurned().intValue() : 0;
             }
         }

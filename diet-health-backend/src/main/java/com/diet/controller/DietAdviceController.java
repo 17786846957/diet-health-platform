@@ -48,4 +48,13 @@ public class DietAdviceController {
         Long userId = (Long) auth.getPrincipal();
         return R.ok(dietAdviceService.getHealthAdvice(userId, memberId));
     }
+
+    @Operation(summary = "一日三餐食谱", description = "生成个性化的一日三餐推荐方案")
+    @GetMapping("/meal-plan")
+    public R<Map<String, Object>> getMealPlan(
+            @Parameter(description = "家庭成员ID") @RequestParam(required = false) Long memberId,
+            Authentication auth) {
+        Long userId = (Long) auth.getPrincipal();
+        return R.ok(dietAdviceService.getMealPlan(userId, memberId));
+    }
 }

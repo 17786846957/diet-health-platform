@@ -125,12 +125,6 @@ public class DietAdviceService {
         for (DietRecord record : records) {
             totalCalories += NutritionUtil.safeDouble(record.getTotalCalories());
             mealTypeCount.merge(record.getMealType(), 1, Integer::sum);
-
-            if (record.getDetails() != null) {
-                for (DietRecordDetail detail : record.getDetails()) {
-                    uniqueFoodIds.add(detail.getFoodId());
-                }
-            }
         }
 
         // 获取详情计算营养素
@@ -140,6 +134,10 @@ public class DietAdviceService {
             LambdaQueryWrapper<DietRecordDetail> dw = new LambdaQueryWrapper<>();
             dw.in(DietRecordDetail::getRecordId, recordIds);
             List<DietRecordDetail> details = detailMapper.selectList(dw);
+
+            for (DietRecordDetail detail : details) {
+                uniqueFoodIds.add(detail.getFoodId());
+            }
 
             Map<Long, Food> foodMap = new HashMap<>();
             if (!uniqueFoodIds.isEmpty()) {
@@ -301,6 +299,41 @@ public class DietAdviceService {
         avg.put("fat", NutritionUtil.round1(fat));
         avg.put("carbs", NutritionUtil.round1(carbs));
         return avg;
+    }
+
+    /**
+     * 生成一日三餐食谱方案
+     */
+    @Transactional(readOnly = true)
+    public Map<String, Object> getMealPlan(Long userId, Long memberId) {
+        Map<String, Object> result = new LinkedHashMap<>();
+
+        double[] targets = (memberId != null)
+                ? userService.calculateTargetsForMember(memberId)
+                : userService.calculateTargets(userId);
+
+        double targetCalories = targets[0];
+        // 早餐30%, 午餐40%, 晚餐30%
+        double breakfastCal = targetCalories * 0.30;
+        double lunchCal = targetCalories * 0.40;
+        double dinnerCal = targetCalories * 0.30;
+
+        List<Map<String, Object>> breakfast = foodRecommendationService.recommendFoods(userId, memberId, "breakfast");
+        List<Map<String, Object>> lunch = foodRecommendationService.recommendFoods(userId, memberId, "lunch");
+        List<Map<String, Object>> dinner = foodRecommendationService.recommendFoods(userId, memberId, "dinner");
+
+        result.put("targetCalories", Math.round(targetCalories));
+        result.put("breakfast", Map.of(
+                "targetCalories", Math.round(breakfastCal),
+                "foods", breakfast.size() > 5 ? breakfast.subList(0, 5) : breakfast));
+        result.put("lunch", Map.of(
+                "targetCalories", Math.round(lunchCal),
+                "foods", lunch.size() > 5 ? lunch.subList(0, 5) : lunch));
+        result.put("dinner", Map.of(
+                "targetCalories", Math.round(dinnerCal),
+                "foods", dinner.size() > 5 ? dinner.subList(0, 5) : dinner));
+
+        return result;
     }
 
     private String getNextMealType() {

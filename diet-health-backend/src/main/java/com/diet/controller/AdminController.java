@@ -3,6 +3,7 @@ package com.diet.controller;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.diet.common.R;
 import com.diet.entity.User;
+import com.diet.service.AdminDashboardService;
 import com.diet.service.DietRecordService;
 import com.diet.service.FoodService;
 import com.diet.service.UserService;
@@ -12,6 +13,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @Tag(name = "后台管理", description = "管理员专用接口（需管理员权限）")
@@ -23,12 +25,15 @@ public class AdminController {
     private final UserService userService;
     private final FoodService foodService;
     private final DietRecordService dietRecordService;
+    private final AdminDashboardService adminDashboardService;
 
     public AdminController(UserService userService, FoodService foodService,
-                           DietRecordService dietRecordService) {
+                           DietRecordService dietRecordService,
+                           AdminDashboardService adminDashboardService) {
         this.userService = userService;
         this.foodService = foodService;
         this.dietRecordService = dietRecordService;
+        this.adminDashboardService = adminDashboardService;
     }
 
     @Operation(summary = "仪表盘数据", description = "获取系统概览数据（用户数、食物数、记录数）")
@@ -60,5 +65,25 @@ public class AdminController {
         }
         userService.deleteUser(id);
         return R.ok("删除成功", null);
+    }
+
+    @Operation(summary = "用户注册趋势", description = "获取最近N天每天的注册用户数")
+    @GetMapping("/stats/user-trend")
+    public R<List<Map<String, Object>>> getUserTrend(
+            @Parameter(description = "统计天数") @RequestParam(defaultValue = "7") int days) {
+        return R.ok(adminDashboardService.getUserRegistrationTrend(days));
+    }
+
+    @Operation(summary = "食物分类分布", description = "获取各分类的食物数量")
+    @GetMapping("/stats/food-categories")
+    public R<List<Map<String, Object>>> getFoodCategories() {
+        return R.ok(adminDashboardService.getFoodCategoryDistribution());
+    }
+
+    @Operation(summary = "记录活跃趋势", description = "获取最近N天每天的饮食记录数")
+    @GetMapping("/stats/record-trend")
+    public R<List<Map<String, Object>>> getRecordTrend(
+            @Parameter(description = "统计天数") @RequestParam(defaultValue = "7") int days) {
+        return R.ok(adminDashboardService.getDailyRecordTrend(days));
     }
 }
