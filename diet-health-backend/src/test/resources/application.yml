@@ -1,0 +1,28 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:diet_test;MODE=MySQL;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema.sql
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      id-type: auto
+
+jwt:
+  secret: test-secret-key-for-unit-testing-only-very-long-string
+  expiration: 86400000
+
+rate-limit:
+  enabled: false
+
+logging:
+  level:
+    com.diet: DEBUG

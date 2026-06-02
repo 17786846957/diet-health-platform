@@ -1,0 +1,43 @@
+# Java
+*.class
+*.jar
+*.war
+target/
+!.mvn/wrapper/maven-wrapper.jar
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+
+# Node
+node_modules/
+dist/
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Build
+build/
+*.gradle
+.gradle/
+
+# Docker
+.docker/
+
+# Credentials
+*.pem
+*.key
+
+# Playwright MCP snapshots
+.playwright-mcp/
